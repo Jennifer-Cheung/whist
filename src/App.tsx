@@ -23,8 +23,9 @@ function App() {
 		newPool.splice(0, 1)
 		setPool(newPool)
 		setDeckCard(pool[0])
-		setTrumpSuit(pool[0].suit)
-		console.log(newPool)
+		if (pool.length === 52) {
+			setTrumpSuit(pool[0].suit)
+		}
 	}, [pool])
 
 	useEffect(() => {
@@ -69,6 +70,11 @@ function App() {
 	}, [chosenCardIndex, myHand, opponentsHand])
 
 	const compare = useCallback(() => {
+		if (arenaCards[0].suit === trumpSuit && arenaCards[1].suit !== trumpSuit) {
+			return 1
+		} else if (arenaCards[1].suit === trumpSuit && arenaCards[0].suit !== trumpSuit) {
+			return 0
+		}
 		if (rankBiggerThan(arenaCards[0].rank, arenaCards[1].rank)) {
 			return 1
 		} else {
@@ -117,12 +123,12 @@ function App() {
 
 	const reset = useCallback(() => {
 		setPool(shuffleDeck())
-		setActionRound(ButtonRound.PlayCard)
+		setActionRound(ButtonRound.Deal)
 		setGameEnds(false)
-		deal()
 		setMyScore(0)
 		setOpponentScore(0)
-	}, [deal])
+		setArenaCards([])
+	}, [])
 
 	const handleNextStep = () => {
 		if (actionRound === ButtonRound.Deal) {
@@ -188,7 +194,10 @@ function App() {
 			{/* Message */}
 
 			{/* Action button */}
-			<button onClick={handleNextStep}>{gameEnds ? 'RESET' : 'NEXT STEP'}</button>
+			<button onClick={handleNextStep}>{
+				actionRound === ButtonRound.Deal ? 'START GAME'
+					: (actionRound === ButtonRound.PlayCard ? 'PLAY' : 'RESET')
+			}</button>
 		</div>
 	)
 }
