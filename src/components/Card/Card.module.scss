@@ -1,3 +1,14 @@
 .card {
-    font-size: 120px;
+  font-size: 120px;
+  cursor: pointer;
+  color: white;
+
+  &:hover {
+    color: aquamarine;
+    transition: all 300ms;
+  }
+}
+
+.chosen {
+  color: aquamarine;
 }
