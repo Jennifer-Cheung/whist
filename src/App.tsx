@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ButtonRound, initialCards, rankBiggerThan, Suit, type Card as CardType } from './utils'
+import { ButtonRound, shuffledDeck, rankBiggerThan, shuffleDeck, Suit, type Card as CardType } from './utils'
 import styles from './App.module.scss'
 import Card from './components/Card/Card'
 import { random } from 'lodash'
 
 function App() {
-	const [pool, setPool] = useState<CardType[]>(initialCards)
+	const [pool, setPool] = useState<CardType[]>(shuffledDeck)
 	const [deckCard, setDeckCard] = useState<CardType>()
 	const [myHand, setMyHand] = useState<CardType[]>([])
 	const [opponentsHand, setOpponentsHand] = useState<CardType[]>([])
@@ -16,6 +16,7 @@ function App() {
 	const [count, setCount] = useState<number>(0)
 	const [myScore, setMyScore] = useState<number>(0)
 	const [opponentScore, setOpponentScore] = useState<number>(0)
+	const [gameEnds, setGameEnds] = useState<boolean>(false)
 
 	const revealDeck = useCallback(() => {
 		const newPool = [...pool]
@@ -114,19 +115,42 @@ function App() {
 		}
 	}, [arenaCards])
 
+	const reset = useCallback(() => {
+		setPool(shuffleDeck())
+		setActionRound(ButtonRound.PlayCard)
+		setGameEnds(false)
+		deal()
+		setMyScore(0)
+		setOpponentScore(0)
+	}, [deal])
+
 	const handleNextStep = () => {
 		if (actionRound === ButtonRound.Deal) {
 			deal()
 			setActionRound(ButtonRound.PlayCard)
-		} else {
+		} else if (actionRound === ButtonRound.PlayCard) {
 			playCard()
+		} else {
+			reset()
 		}
 	}
+
+	/* Game end condition */
+	useEffect(() => {
+		if (myHand.length === 0 && arenaCards.length > 0) {
+			setActionRound(ButtonRound.Reset)
+			setGameEnds(true)
+		}
+	}, [myHand, arenaCards])
 
 	return (
 		<div className={styles.container}>
 			{/* Scores */}
 			<span>My score: {myScore} Opponent's score: {opponentScore}</span>
+			{gameEnds
+				? <span>{myScore > opponentScore ? 'You won! :D' : (myScore < opponentScore ? 'You lost! :(' : 'You tied! :)')}</span>
+				: ''
+			}
 
 			{/* Deck */}
 			{pool.length > 0
@@ -164,7 +188,7 @@ function App() {
 			{/* Message */}
 
 			{/* Action button */}
-			<button onClick={handleNextStep}>NEXT STEP</button>
+			<button onClick={handleNextStep}>{gameEnds ? 'RESET' : 'NEXT STEP'}</button>
 		</div>
 	)
 }

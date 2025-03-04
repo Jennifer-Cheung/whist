@@ -1,4 +1,4 @@
-import { random, range } from "lodash"
+import { random, range, toInteger } from "lodash"
 
 /**
  * The four suits
@@ -10,11 +10,10 @@ export enum Suit {
   Clubs,
 }
 
-const numberRegex = /^\d+$/
-const isNumber = (c: string) => {
-  return numberRegex.test(c)
-}
 const letters = ["J", "C", "Q", "K", "A"]
+export const isNumber = (s: string) => {
+  return letters.indexOf(s) === -1
+}
 
 /**
  * Regardless of suits, returns whether the first card is bigger than the second card
@@ -24,7 +23,7 @@ const letters = ["J", "C", "Q", "K", "A"]
  */
 export const rankBiggerThan = (rank1: string, rank2: string) => {
   if (isNumber(rank1) && isNumber(rank2)) {
-    return rank1 > rank2
+    return toInteger(rank1) > toInteger(rank2)
   } else if (!isNumber(rank1) && !isNumber(rank2)) {
     return letters.indexOf(rank1) > letters.indexOf(rank2)
   } else {
@@ -74,13 +73,17 @@ for (let suit = Suit.Spades; suit <= Suit.Clubs; suit++) {
     })
   })
 }
-initialCards.forEach((card, i) => {
-  const randomIndex = random(0, i)
-  const temp = card
-  initialCards[i] = initialCards[randomIndex]
-  initialCards[randomIndex] = temp
-})
-export { initialCards }
+export const shuffleDeck = () => {
+  initialCards.forEach((card, i) => {
+    const randomIndex = random(0, i)
+    const temp = card
+    initialCards[i] = initialCards[randomIndex]
+    initialCards[randomIndex] = temp
+  })
+  return initialCards
+}
+const shuffledDeck = shuffleDeck()
+export { shuffledDeck }
 
 /* Keeps track of the current button action. */
 export enum ButtonRound {
