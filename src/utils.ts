@@ -91,3 +91,20 @@ export enum ButtonRound {
   PlayCard,
   Reset,
 }
+
+export enum Player {
+  Human,
+  Computer,
+}
+
+export const getSuitName = (suit: Suit) => {
+  if (suit === Suit.Clubs) {
+    return "Clubs"
+  } else if (suit === Suit.Diamonds) {
+    return "Diamonds"
+  } else if (suit === Suit.Hearts) {
+    return "Hearts"
+  } else {
+    return "Spades"
+  }
+}

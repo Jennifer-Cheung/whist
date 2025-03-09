@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ButtonRound, shuffledDeck, rankBiggerThan, shuffleDeck, Suit, type Card as CardType } from './utils'
+import { ButtonRound, shuffledDeck, rankBiggerThan, shuffleDeck, Suit, type Card as CardType, Player, getSuitName } from './utils'
 import styles from './App.module.scss'
 import Card from './components/Card/Card'
 import { random } from 'lodash'
@@ -17,6 +17,8 @@ function App() {
 	const [myScore, setMyScore] = useState<number>(0)
 	const [opponentScore, setOpponentScore] = useState<number>(0)
 	const [gameEnds, setGameEnds] = useState<boolean>(false)
+	const [currentSuit, setCurrentSuit] = useState<number>()
+	const [lastWinner, setLastWinner] = useState<Player>(Player.Human)
 
 	const revealDeck = useCallback(() => {
 		const newPool = [...pool]
@@ -32,7 +34,7 @@ function App() {
 		if (pool.length > 0) {
 			revealDeck()
 		}
-	}, [count])
+	}, [count, gameEnds])
 
 	const deal = useCallback(() => {
 		const newPool = [...pool]
@@ -47,38 +49,69 @@ function App() {
 		setChosenCardIndex(index)
 	}, [])
 
+	const myTurn = useCallback(() => {
+		// My hand
+		const chosenCard = myHand[chosenCardIndex!]
+		const myNewHand = [...myHand]
+		myNewHand.splice(chosenCardIndex!, 1)
+		setMyHand(myNewHand)
+		setChosenCardIndex(undefined)
+		if (lastWinner === Player.Human) {
+			setCurrentSuit(chosenCard.suit)
+		}
+		return chosenCard
+	}, [chosenCardIndex, myHand, lastWinner])
+
+	const opponentsTurn = (newHand: CardType[] = []) => {
+		// Opponent's hand
+		if (newHand.length === 0) {
+			const randomIndex = random(0, opponentsHand.length - 1)
+			const chosenCard = opponentsHand[randomIndex]
+			const opponentsNewHand = [...opponentsHand]
+			opponentsNewHand.splice(randomIndex, 1)
+			setOpponentsHand(opponentsNewHand)
+			if (lastWinner === Player.Computer) {
+				setCurrentSuit(chosenCard.suit)
+			}
+			return chosenCard
+		} else {
+			const randomIndex = random(0, newHand.length - 1)
+			const chosenCard = newHand[randomIndex]
+			const opponentsNewHand = [...newHand]
+			opponentsNewHand.splice(randomIndex, 1)
+			setOpponentsHand(opponentsNewHand)
+			if (lastWinner === Player.Computer) {
+				setCurrentSuit(chosenCard.suit)
+			}
+			return chosenCard
+		}
+	}
+
 	/**
 	 * Returns success if a card is chosen first, error if unsuccessful
 	 */
 	const playCard = useCallback(() => {
-		if (chosenCardIndex !== undefined) {
-			// My hand
-			const chosenCard = myHand[chosenCardIndex]
-			const myNewHand = [...myHand]
-			myNewHand.splice(chosenCardIndex, 1)
-			setMyHand(myNewHand)
-			setChosenCardIndex(undefined)
-
-			// Opponent's hand
-			const randomIndex = random(0, opponentsHand.length - 1)
-			const opponentsCard = opponentsHand[randomIndex]
-			const opponentsNewHand = [...opponentsHand]
-			opponentsNewHand.splice(0, 1)
-			setOpponentsHand(opponentsNewHand)
+		if (chosenCardIndex !== undefined && lastWinner === Player.Human) {
+			const chosenCard = myTurn()
+			const opponentsCard = opponentsTurn()
 			setArenaCards([chosenCard].concat([opponentsCard]))
+		} else if (chosenCardIndex !== undefined && lastWinner === Player.Computer) {
+			const chosenCard = myTurn()
+
+			setArenaCards([...arenaCards].concat([chosenCard]))
 		}
-	}, [chosenCardIndex, myHand, opponentsHand])
+	}, [chosenCardIndex, myHand, opponentsHand, arenaCards, lastWinner])
 
 	const compare = useCallback(() => {
 		if (arenaCards[0].suit === trumpSuit && arenaCards[1].suit !== trumpSuit) {
-			return 1
+			return lastWinner === Player.Human
 		} else if (arenaCards[1].suit === trumpSuit && arenaCards[0].suit !== trumpSuit) {
-			return 0
+			return lastWinner !== Player.Human
 		}
-		if (rankBiggerThan(arenaCards[0].rank, arenaCards[1].rank)) {
-			return 1
+		if (!rankBiggerThan(arenaCards[1].rank, arenaCards[0].rank)) {
+			return lastWinner === Player.Human
 		} else {
-			return 0
+			return lastWinner !== Player.Human
 		}
 	}, [arenaCards])
 
@@ -89,6 +122,7 @@ function App() {
 			setTimeout(() => {
 				if (deckCard && pool.length > 0) {
 					if (compareResult) {
+						// Human wins this round
 						const myNewHand = [...myHand]
 						myNewHand.push(deckCard)
 						setMyHand(myNewHand)
@@ -97,7 +131,10 @@ function App() {
 						opponentsNewHand.push(pool[0])
 						setOpponentsHand(opponentsNewHand)
 						setPool([...pool].slice(1))
+						setArenaCards([])
+						setLastWinner(Player.Human)
 					} else {
+						// Computer wins this round
 						const opponentsNewHand = [...opponentsHand]
 						opponentsNewHand.push(deckCard)
 						setOpponentsHand(opponentsNewHand)
@@ -106,16 +143,37 @@ function App() {
 						myNewHand.push(pool[0])
 						setMyHand(myNewHand)
 						setPool([...pool].slice(1))
+
+						const opponentsCard = opponentsTurn(opponentsNewHand)
+
+						setArenaCards([opponentsCard])
+						setLastWinner(Player.Computer)
 					}
-					setArenaCards([])
+
 					if (pool.length > 1) {
 						setCount(count + 1)
 					}
 				}
 				if (compareResult) {
 					setMyScore(myScore + 1)
+					setLastWinner(Player.Human)
+					if (pool.length === 0) {
+						setArenaCards([])
+					}
 				} else {
 					setOpponentScore(opponentScore + 1)
+					setLastWinner(Player.Computer)
+					if (pool.length === 0) {
+						const opponentsCard = opponentsTurn([...opponentsHand])
+						setArenaCards([opponentsCard])
+					}
+				}
+
+
+				/* Game end condition */
+				if (myHand.length === 0 && arenaCards.length > 0) {
+					setActionRound(ButtonRound.Reset)
+					setGameEnds(true)
 				}
 			}, 1000)
 		}
@@ -141,21 +199,13 @@ function App() {
 		}
 	}
 
-	/* Game end condition */
-	useEffect(() => {
-		if (myHand.length === 0 && arenaCards.length > 0) {
-			setActionRound(ButtonRound.Reset)
-			setGameEnds(true)
-		}
-	}, [myHand, arenaCards])
-
 	return (
 		<div className={styles.container}>
 			{/* Scores */}
-			<span>My score: {myScore} Opponent's score: {opponentScore}</span>
+			<span>{`My score: ${myScore}    Opponent's score: ${opponentScore}`}</span>
 			{gameEnds
 				? <span>{myScore > opponentScore ? 'You won! :D' : (myScore < opponentScore ? 'You lost! :(' : 'You tied! :)')}</span>
-				: ''
+				: (trumpSuit !== undefined ? `Trump suit: ${getSuitName(trumpSuit)}` : '')
 			}
 
 			{/* Deck */}
