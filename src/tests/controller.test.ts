@@ -457,4 +457,106 @@ describe("State", () => {
       })
     })
   })
+
+  describe("update", () => {
+    beforeEach(() => {
+      vi.mock("../utils", async () => {
+        const actual = await vi.importActual("../utils")
+        return {
+          ...(actual as object),
+          shuffleDeck: () => createOrderedDeck(),
+        }
+      })
+    })
+
+    afterEach(() => {
+      vi.clearAllMocks()
+    })
+
+    describe("when player wins and becomes leading player", () => {
+      it("should handle player winning when initially leading", () => {
+        const state = new State()
+        state.leadingPlayer = Player.Player
+        state.myScore = 0
+        state.myHand = [{ suit: Suit.Hearts, rank: "K" }]
+        state.opponentHand = [{ suit: Suit.Hearts, rank: "2" }]
+        state.deck = [
+          { suit: Suit.Diamonds, rank: "A" },
+          { suit: Suit.Clubs, rank: "K" },
+        ]
+
+        state.update(state.myHand[0])
+
+        expect(state.trickArea).toHaveLength(0)
+        expect(state.myScore).toBe(1)
+        expect(state.myHand).toHaveLength(1)
+        expect(state.opponentHand).toHaveLength(1)
+        expect(state.leadingPlayer).toBe(Player.Player)
+      })
+
+      it("should handle player winning when initially following", () => {
+        const state = new State()
+        state.leadingPlayer = Player.Opponent
+        state.myScore = 0
+        state.myHand = [{ suit: Suit.Hearts, rank: "A" }]
+        state.opponentHand = []
+        state.trickArea = [{ suit: Suit.Hearts, rank: "K" }]
+        state.deck = [
+          { suit: Suit.Diamonds, rank: "A" },
+          { suit: Suit.Clubs, rank: "K" },
+        ]
+
+        state.update(state.myHand[0])
+
+        expect(state.trickArea).toHaveLength(0)
+        expect(state.myScore).toBe(1)
+        expect(state.myHand).toHaveLength(1)
+        expect(state.opponentHand).toHaveLength(1)
+        expect(state.leadingPlayer).toBe(Player.Player)
+      })
+    })
+
+    describe("when opponent wins and becomes leading player", () => {
+      it("should handle opponent winning when player initially leading", () => {
+        const state = new State()
+        state.leadingPlayer = Player.Player
+        state.opponentScore = 0
+        state.myHand = [{ suit: Suit.Hearts, rank: "2" }]
+        state.opponentHand = [{ suit: Suit.Hearts, rank: "A" }]
+        state.deck = [
+          { suit: Suit.Diamonds, rank: "A" },
+          { suit: Suit.Clubs, rank: "K" },
+        ]
+
+        state.update(state.myHand[0])
+
+        expect(state.trickArea).toHaveLength(1)
+        expect(state.opponentScore).toBe(1)
+        expect(state.myHand).toHaveLength(1)
+        expect(state.opponentHand).toHaveLength(0)
+        expect(state.leadingPlayer).toBe(Player.Opponent)
+      })
+
+      it("should handle opponent winning when initially leading", () => {
+        const state = new State()
+        state.leadingPlayer = Player.Opponent
+        state.opponentScore = 0
+        state.myHand = [{ suit: Suit.Hearts, rank: "2" }]
+        state.opponentHand = []
+        state.trickArea = [{ suit: Suit.Hearts, rank: "K" }]
+        state.deck = [
+          { suit: Suit.Diamonds, rank: "A" },
+          { suit: Suit.Clubs, rank: "K" },
+        ]
+
+        state.update(state.myHand[0])
+
+        expect(state.trickArea).toHaveLength(1)
+        expect(state.opponentScore).toBe(1)
+        expect(state.myHand).toHaveLength(1)
+        expect(state.opponentHand).toHaveLength(0)
+        expect(state.leadingPlayer).toBe(Player.Opponent)
+      })
+    })
+  })
 })

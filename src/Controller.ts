@@ -23,7 +23,6 @@ export class State {
   myScore: number
   opponentScore: number
   trickArea: Card[] // The two cards played in a round, contribute to one trick
-  currentSuit: Suit | undefined // The leading suit. Undefined at the start
   trumpSuit: Suit
 
   leadingPlayer: Player
@@ -111,16 +110,14 @@ export class State {
    * @param {Card} chosenCard - The card chosen by the player in this round
    */
   update(chosenCard: Card): State {
+    this.playerPlayCard(chosenCard)
     if (this.leadingPlayer === Player.Player) {
-      this.trickArea.push(chosenCard)
-      this.currentSuit = chosenCard.suit
       this.updateProbabilityVector({
         cardsNotOnHand: [this.trickArea[0]],
         cardsOnHand: [],
       })
       this.opponentTurn()
     } else {
-      this.trickArea.push(chosenCard)
       this.updateProbabilityVector({
         cardsNotOnHand: [this.trickArea[1]],
         cardsOnHand: [],
@@ -177,6 +174,16 @@ export class State {
     return this
   }
 
+  opponentPlayCard(card: Card) {
+    this.opponentHand.splice(this.opponentHand.indexOf(card))
+    this.trickArea.push(card)
+  }
+
+  playerPlayCard(card: Card) {
+    this.myHand.splice(this.myHand.indexOf(card))
+    this.trickArea.push(card)
+  }
+
   opponentTurn(): void {
     if (this.leadingPlayer === Player.Player) {
       const availableCards = this.opponentHand.filter(
@@ -189,18 +196,18 @@ export class State {
         )
         availableCards.forEach((card) => {
           if (cardBiggerThan(card, this.trickArea[0], this.trumpSuit)) {
-            this.trickArea[1] = card
+            this.opponentPlayCard(card)
             return
           }
         })
         // Can follow suit but no cards can beat the player. Play the smallest card possible.
-        this.trickArea.push(availableCards[0])
+        this.opponentPlayCard(availableCards[0])
       } else {
         // Cannot follow suit, play the smallest card available
         const orderedCards = [...this.opponentHand].sort((card1, card2) =>
           cardBiggerThan(card1, card2, this.trumpSuit) ? 1 : -1
         )
-        this.trickArea[1] = orderedCards[0]
+        this.opponentPlayCard(orderedCards[0])
         return
       }
     } else {
@@ -235,9 +242,9 @@ export class State {
         (pair) => pair.probability >= 0.8
       )
       if (targetPair !== undefined) {
-        this.trickArea.push(this.opponentHand[targetPair.index])
+        this.opponentPlayCard(this.opponentHand[targetPair.index])
       } else {
-        this.trickArea.push(
+        this.opponentPlayCard(
           this.opponentHand[
             sortedProbabilityPairs[sortedProbabilityPairs.length - 1].index
           ]
