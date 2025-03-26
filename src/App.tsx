@@ -1,255 +1,149 @@
-import { useCallback, useEffect, useState } from 'react'
-import { ButtonRound, shuffledDeck, rankBiggerThan, shuffleDeck, Suit, type Card as CardType, Player, getSuitName } from './utils'
-import styles from './App.module.scss'
-import Card from './components/Card/Card'
-import { random } from 'lodash'
+import { useEffect, useState } from "react"
+import { State } from "./Controller"
+import styles from "./App.module.scss"
+import Card from "./components/Card/Card"
+import { getSuitSymbol } from "./utils"
+import { type Card as CardType, type GameState } from "./types"
+import { AnimateSharedLayout } from "motion/react"
 
 function App() {
-	const [pool, setPool] = useState<CardType[]>(shuffledDeck)
-	const [deckCard, setDeckCard] = useState<CardType>()
-	const [myHand, setMyHand] = useState<CardType[]>([])
-	const [opponentsHand, setOpponentsHand] = useState<CardType[]>([])
-	const [chosenCardIndex, setChosenCardIndex] = useState<number>()
-	const [trumpSuit, setTrumpSuit] = useState<number>()
-	const [actionRound, setActionRound] = useState<ButtonRound>(0)
-	const [arenaCards, setArenaCards] = useState<CardType[]>([])
-	const [count, setCount] = useState<number>(0)
-	const [myScore, setMyScore] = useState<number>(0)
-	const [opponentScore, setOpponentScore] = useState<number>(0)
-	const [gameEnds, setGameEnds] = useState<boolean>(false)
-	const [currentSuit, setCurrentSuit] = useState<number>()
-	const [lastWinner, setLastWinner] = useState<Player>(Player.Human)
+  // Big object for storing game states
+  const [state, setState] = useState(() => new State())
+  const [showGame, setShowGame] = useState(false)
+  const [gameOver, setGameOver] = useState(false)
+  const [gameState, setGameState] = useState<GameState>("unfinished")
 
-	const revealDeck = useCallback(() => {
-		const newPool = [...pool]
-		newPool.splice(0, 1)
-		setPool(newPool)
-		setDeckCard(pool[0])
-		if (pool.length === 52) {
-			setTrumpSuit(pool[0].suit)
-		}
-	}, [pool])
+  const startGame = () => {
+    setShowGame(true)
+  }
 
-	useEffect(() => {
-		if (pool.length > 0) {
-			revealDeck()
-		}
-	}, [count, gameEnds])
+  const showRules = () => {
+    // Implement rules modal or navigation to rules page
+    console.log("Show rules")
+  }
 
-	const deal = useCallback(() => {
-		const newPool = [...pool]
-		const myNewHand = newPool.splice(0, 13)
-		const opponentsNewHand = newPool.splice(0, 13)
-		setMyHand(myNewHand)
-		setOpponentsHand(opponentsNewHand)
-		setPool(newPool)
-	}, [pool])
+  const handleCardClick = (suit: number, rank: string) => {
+    setState((prevState) => prevState.update({ suit, rank }))
+  }
 
-	const handleCardOnClick = useCallback((index: number) => {
-		setChosenCardIndex(index)
-	}, [])
+  useEffect(() => {
+    if (state.getGameState() !== "unfinished") {
+      setGameOver(true)
+      setGameState(state.getGameState())
+    }
+  }, [state])
 
-	const myTurn = useCallback(() => {
-		// My hand
-		const chosenCard = myHand[chosenCardIndex!]
-		const myNewHand = [...myHand]
-		myNewHand.splice(chosenCardIndex!, 1)
-		setMyHand(myNewHand)
-		setChosenCardIndex(undefined)
-		if (lastWinner === Player.Human) {
-			setCurrentSuit(chosenCard.suit)
-		}
-		return chosenCard
-	}, [chosenCardIndex, myHand, lastWinner])
+  const checkDisabled = (card: CardType) => {
+    if (
+      state.getLeadingSuit() !== undefined &&
+      state.getMyHand().some((card) => card.suit === state.getLeadingSuit())
+    ) {
+      if (card.suit !== state.getLeadingSuit()) {
+        return true
+      }
+    }
+  }
 
-	const opponentsTurn = (newHand: CardType[] = []) => {
-		// Opponent's hand
-		if (newHand.length === 0) {
-			const randomIndex = random(0, opponentsHand.length - 1)
-			const chosenCard = opponentsHand[randomIndex]
-			const opponentsNewHand = [...opponentsHand]
-			opponentsNewHand.splice(randomIndex, 1)
-			setOpponentsHand(opponentsNewHand)
-			if (lastWinner === Player.Computer) {
-				setCurrentSuit(chosenCard.suit)
-			}
-			return chosenCard
-		} else {
-			const randomIndex = random(0, newHand.length - 1)
-			const chosenCard = newHand[randomIndex]
-			const opponentsNewHand = [...newHand]
-			opponentsNewHand.splice(randomIndex, 1)
-			setOpponentsHand(opponentsNewHand)
-			if (lastWinner === Player.Computer) {
-				setCurrentSuit(chosenCard.suit)
-			}
-			return chosenCard
-		}
-	}
+  return (
+    <div className={styles.container}>
+      <div
+        className={`${styles["title-screen"]} ${showGame ? styles.hidden : ""}`}
+      >
+        <div className={styles["title-content"]}>
+          <h1>German Whist</h1>
 
-	/**
-	 * Returns success if a card is chosen first, error if unsuccessful
-	 */
-	const playCard = useCallback(() => {
-		if (chosenCardIndex !== undefined && lastWinner === Player.Human) {
-			const chosenCard = myTurn()
-			const opponentsCard = opponentsTurn()
-			setArenaCards([chosenCard].concat([opponentsCard]))
-		} else if (chosenCardIndex !== undefined && lastWinner === Player.Computer) {
-			const chosenCard = myTurn()
+          <div className={styles["menu-buttons"]}>
+            <button className={styles["start-button"]} onClick={startGame}>
+              Start Game
+            </button>
+            {/* <button className={styles["rules-button"]} onClick={showRules}>
+              <span className={styles["info-icon"]}>ⓘ</span> How To Play
+            </button> */}
+          </div>
+        </div>
+      </div>
 
-			setArenaCards([...arenaCards].concat([chosenCard]))
-		}
-	}, [chosenCardIndex, myHand, opponentsHand, arenaCards, lastWinner])
+      <div
+        className={`${styles["game-container"]} ${
+          !showGame ? styles.hidden : ""
+        }`}
+      >
+        <div className={styles.scoreBoard}>
+          <p className={styles.scoreCard}>
+            Player <br /> {state.getMyScore()}
+          </p>
+          <span>:</span>
+          <p className={styles.scoreCard}>
+            Computer <br /> {state.getOpponentScore()}
+          </p>
+        </div>
 
-	const compare = useCallback(() => {
-		if (arenaCards[0].suit === trumpSuit && arenaCards[1].suit !== trumpSuit) {
-			return lastWinner === Player.Human
-		} else if (arenaCards[1].suit === trumpSuit && arenaCards[0].suit !== trumpSuit) {
-			return lastWinner !== Player.Human
-		}
-		if (!rankBiggerThan(arenaCards[1].rank, arenaCards[0].rank)) {
-			return lastWinner === Player.Human
-		} else {
-			return lastWinner !== Player.Human
-		}
-	}, [arenaCards])
+        <span className={styles.trumpSuitMessage}>
+          Trump Suit:&nbsp;&nbsp;
+          <span className={styles.suitSymbol}>{`${getSuitSymbol(
+            state.getTrumpSuit()
+          )}`}</span>
+        </span>
 
-	/* Compare cards and distribute the top 2 cards of the deck. */
-	useEffect(() => {
-		if (arenaCards.length === 2) {
-			const compareResult = compare()
-			setTimeout(() => {
-				if (deckCard && pool.length > 0) {
-					if (compareResult) {
-						// Human wins this round
-						const myNewHand = [...myHand]
-						myNewHand.push(deckCard)
-						setMyHand(myNewHand)
+        <div className={styles.deck}>
+          {state
+            .getDeck()
+            .toReversed()
+            .map((card) => (
+              <Card
+                suit={card.suit}
+                rank={card.rank}
+                key={`${card.suit}${card.rank}`}
+                className={styles.deckCard}
+              />
+            ))}
+        </div>
 
-						const opponentsNewHand = [...opponentsHand]
-						opponentsNewHand.push(pool[0])
-						setOpponentsHand(opponentsNewHand)
-						setPool([...pool].slice(1))
-						setArenaCards([])
-						setLastWinner(Player.Human)
-					} else {
-						// Computer wins this round
-						const opponentsNewHand = [...opponentsHand]
-						opponentsNewHand.push(deckCard)
-						setOpponentsHand(opponentsNewHand)
+        {!gameOver ? (
+          <div className={styles.gameArea}>
+            <div className={styles.hand}>
+              {state.getOpponentHand().map((card) => (
+                <Card
+                  suit={card.suit}
+                  rank={card.rank}
+                  key={`${card.suit}${card.rank}`}
+                  //   flipped
+                />
+              ))}
+            </div>
 
-						const myNewHand = [...myHand]
-						myNewHand.push(pool[0])
-						setMyHand(myNewHand)
-						setPool([...pool].slice(1))
+            <div className={styles.trickArea}>
+              {state.getTrickArea().map((card) => (
+                <Card
+                  suit={card.suit}
+                  rank={card.rank}
+                  key={`${card.suit}${card.rank}`}
+                />
+              ))}
+            </div>
 
-						const opponentsCard = opponentsTurn(opponentsNewHand)
-
-						setArenaCards([opponentsCard])
-						setLastWinner(Player.Computer)
-					}
-
-					if (pool.length > 1) {
-						setCount(count + 1)
-					}
-				}
-				if (compareResult) {
-					setMyScore(myScore + 1)
-					setLastWinner(Player.Human)
-					if (pool.length === 0) {
-						setArenaCards([])
-					}
-				} else {
-					setOpponentScore(opponentScore + 1)
-					setLastWinner(Player.Computer)
-					if (pool.length === 0) {
-						const opponentsCard = opponentsTurn([...opponentsHand])
-						setArenaCards([opponentsCard])
-					}
-				}
-
-
-				/* Game end condition */
-				if (myHand.length === 0 && arenaCards.length > 0) {
-					setActionRound(ButtonRound.Reset)
-					setGameEnds(true)
-				}
-			}, 1000)
-		}
-	}, [arenaCards])
-
-	const reset = useCallback(() => {
-		setPool(shuffleDeck())
-		setActionRound(ButtonRound.Deal)
-		setGameEnds(false)
-		setMyScore(0)
-		setOpponentScore(0)
-		setArenaCards([])
-	}, [])
-
-	const handleNextStep = () => {
-		if (actionRound === ButtonRound.Deal) {
-			deal()
-			setActionRound(ButtonRound.PlayCard)
-		} else if (actionRound === ButtonRound.PlayCard) {
-			playCard()
-		} else {
-			reset()
-		}
-	}
-
-	return (
-		<div className={styles.container}>
-			{/* Scores */}
-			<span>{`My score: ${myScore}    Opponent's score: ${opponentScore}`}</span>
-			{gameEnds
-				? <span>{myScore > opponentScore ? 'You won! :D' : (myScore < opponentScore ? 'You lost! :(' : 'You tied! :)')}</span>
-				: (trumpSuit !== undefined ? `Trump suit: ${getSuitName(trumpSuit)}` : '')
-			}
-
-			{/* Deck */}
-			{pool.length > 0
-				? <Card suit={deckCard ? deckCard.suit : Suit.Diamonds} rank={deckCard ? deckCard.rank : 7} />
-				: ''
-			}
-
-			{/* Opponent's hand */}
-			<div className={styles.hand}>
-				{opponentsHand.map((card, i) => (
-					<Card suit={card.suit} rank={card.rank} key={i} />
-				))}
-			</div>
-
-			{/* Arena */}
-			<div className={styles.arena}>
-				{arenaCards.map((card, i) => (
-					<Card suit={card.suit} rank={card.rank} key={i} />
-				))}
-			</div>
-
-			{/* My hand */}
-			<div className={styles.hand}>
-				{myHand.map((card, i) => (
-					<Card
-						suit={card.suit}
-						rank={card.rank}
-						key={i}
-						onClick={() => { handleCardOnClick(i) }}
-						isChosen={chosenCardIndex === i}
-					/>
-				))}
-			</div>
-
-			{/* Message */}
-
-			{/* Action button */}
-			<button onClick={handleNextStep}>{
-				actionRound === ButtonRound.Deal ? 'START GAME'
-					: (actionRound === ButtonRound.PlayCard ? 'PLAY' : 'RESET')
-			}</button>
-		</div>
-	)
+            <div className={styles.hand}>
+              {state.getMyHand().map((card) => (
+                <Card
+                  suit={card.suit}
+                  rank={card.rank}
+                  key={`${card.suit}${card.rank}`}
+                  onClick={
+                    checkDisabled(card)
+                      ? undefined
+                      : () => handleCardClick(card.suit, card.rank)
+                  }
+                  disabled={checkDisabled(card)}
+                />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <h1>You {gameState}!</h1>
+        )}
+      </div>
+    </div>
+  )
 }
 
 export default App
