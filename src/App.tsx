@@ -101,7 +101,7 @@ function App() {
                   suit={card.suit}
                   rank={card.rank}
                   key={`${card.suit}${card.rank}`}
-                  //   flipped
+                  flipped
                 />
               ))}
             </div>
