@@ -4,7 +4,6 @@ import styles from "./App.module.scss"
 import Card from "./components/Card/Card"
 import { getSuitSymbol } from "./utils"
 import { type Card as CardType, type GameState } from "./types"
-import { AnimateSharedLayout } from "motion/react"
 
 function App() {
   // Big object for storing game states
@@ -15,11 +14,6 @@ function App() {
 
   const startGame = () => {
     setShowGame(true)
-  }
-
-  const showRules = () => {
-    // Implement rules modal or navigation to rules page
-    console.log("Show rules")
   }
 
   const handleCardClick = (suit: number, rank: string) => {
