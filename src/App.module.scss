@@ -1,21 +1,121 @@
+@import url("https://fonts.googleapis.com/css2?family=Inria+Serif:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+
+// Variables
+$background-color: #252525;
+$text-color: white;
+$button-radius: 25px;
+$button-transition: transform 0.2s;
+
+body {
+  margin: 0;
+  font-family: "Inria Serif", sans-serif;
+  background-color: $background-color;
+  font-size: 1rem;
+}
+
 .container {
+  width: 100vw;
+  height: 100vh;
+}
+
+.title-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100vw;
+  background-image: url("./assets/background.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+  opacity: 1;
+  transition: 0.5s;
+
+  .title-content {
     display: flex;
     flex-direction: column;
-    gap: 0px;
-    width: 100vw;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
+    z-index: 1;
+  }
 }
 
-.hand {
-    display: flex;
-    flex-direction: row;
-    gap: 20px;
+.game-title {
+  font-size: 3.5rem;
+  color: $text-color;
+  text-align: center;
+  margin-bottom: 3rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-.arena {
-    display: flex;
-    flex-direction: row;
-    gap: 20px;
-    min-height: 180px;
+.menu-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+%button-base {
+  padding: 0.8rem 2rem;
+  font-size: 1rem;
+  border-radius: $button-radius;
+  border: none;
+  cursor: pointer;
+  min-width: 180px;
+  transition: $button-transition;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
+.start-button {
+  @extend %button-base;
+  background-color: $text-color;
+  color: $background-color;
+}
+
+.rules-button {
+  @extend %button-base;
+  background-color: transparent;
+  border: 1px solid $text-color;
+  color: $text-color;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.info-icon {
+  font-size: 1.2rem;
+}
+
+.hidden {
+  opacity: 0;
+  pointer-events: none;
+  height: 0;
+}
+
+.game-container {
+  transition: 0.5s;
+  display: flex;
+  flex-direction: row;
+  padding: 60px 0;
+  justify-content: center;
+  gap: 80px;
+}
+
+.scoreBoard {
+  width: 400px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.scoreCard {
+  text-align: center;
+  flex-basis: 0%;
+  flex-grow: 1;
+  padding: 0;
 }

@@ -1,14 +1,5 @@
 import { random, range, toInteger } from "lodash"
-
-/**
- * The four suits
- */
-export enum Suit {
-  Spades,
-  Hearts,
-  Diamonds,
-  Clubs,
-}
+import { Card, Suit } from "./types"
 
 const letters = ["J", "C", "Q", "K", "A"]
 export const isNumber = (s: string) => {
@@ -23,12 +14,43 @@ export const isNumber = (s: string) => {
  */
 export const rankBiggerThan = (rank1: string, rank2: string) => {
   if (isNumber(rank1) && isNumber(rank2)) {
-    return toInteger(rank1) > toInteger(rank2)
+    return toInteger(rank1) >= toInteger(rank2)
   } else if (!isNumber(rank1) && !isNumber(rank2)) {
-    return letters.indexOf(rank1) > letters.indexOf(rank2)
+    return letters.indexOf(rank1) >= letters.indexOf(rank2)
   } else {
     return isNumber(rank2)
   }
+}
+
+/**
+ * Returns if the first card is bigger than the second card. Assume the first card is the leading card, and the suit is correctly followed.
+ * Note that no two cards are considered equal.
+ * @param card1 The first card in the trick area
+ * @param card2 The second card in the trick area
+ * @param trumpSuit The trump suit of the game
+ * @returns Whether the first card is bigger than the second card
+ */
+export const cardBiggerThan = (
+  card1: Card,
+  card2: Card,
+  trumpSuit: Suit
+): boolean => {
+  // Player 2 cannot follow suit
+  if (card1.suit !== card2.suit && card2.suit !== trumpSuit) {
+    return true
+  }
+
+  // Player 1 did not play the trump suit, but Player 2 played and wins
+  if (
+    card1.suit !== card2.suit &&
+    card1.suit !== trumpSuit &&
+    card2.suit === trumpSuit
+  ) {
+    return false
+  }
+
+  // They have the same suit and are compared by the rank
+  return rankBiggerThan(card1.rank, card2.rank)
 }
 
 /**
@@ -53,27 +75,22 @@ export const getUnicodeCard = (suit: Suit, rank: string | number) => {
   return String.fromCodePoint(code)
 }
 
-export type Card = {
-  suit: Suit
-  rank: string | number
-}
-
 /**
  * Creates the initial card permutation.
  */
-const ranks = range(2, 11)
-  .map((num) => num.toString())
-  .concat(letters.toSpliced(1, 1))
-const initialCards: Card[] = []
-for (let suit = Suit.Spades; suit <= Suit.Clubs; suit++) {
-  ranks.forEach((rank) => {
-    initialCards.push({
-      suit,
-      rank,
+export const shuffleDeck = (): Card[] => {
+  const ranks = range(2, 11)
+    .map((num) => num.toString())
+    .concat(letters.toSpliced(1, 1))
+  const initialCards: Card[] = []
+  for (let suit = Suit.Spades; suit <= Suit.Clubs; suit++) {
+    ranks.forEach((rank) => {
+      initialCards.push({
+        suit,
+        rank,
+      })
     })
-  })
-}
-export const shuffleDeck = () => {
+  }
   initialCards.forEach((card, i) => {
     const randomIndex = random(0, i)
     const temp = card
@@ -82,8 +99,6 @@ export const shuffleDeck = () => {
   })
   return initialCards
 }
-const shuffledDeck = shuffleDeck()
-export { shuffledDeck }
 
 /* Keeps track of the current button action. */
 export enum ButtonRound {
@@ -107,4 +122,52 @@ export const getSuitName = (suit: Suit) => {
   } else {
     return "Spades"
   }
+}
+
+/**
+ * Returns the offset to be used in the probability vector
+ * @param card The card to be turned into an index
+ */
+export const cardToIndex = (card: Card): number => {
+  if (isNumber(card.rank)) {
+    return card.suit * 13 + +card.rank - 1
+  } else {
+    switch (card.rank) {
+      case "J":
+        return card.suit * 13 + 11 - 1
+      case "Q":
+        return card.suit * 13 + 12 - 1
+      case "K":
+        return card.suit * 13 + 13 - 1
+      default:
+        return card.suit * 13
+    }
+  }
+}
+
+/**
+ * Return the card corresponding to the position in the probability vector
+ * @param index - Index of a card in the probability vector
+ */
+export const indexToCard = (index: number): Card => {
+  const suit: Suit = Math.floor(index / 13)
+  const offset = index % 13
+  let rank: string = ""
+  if (offset === 0) {
+    rank = "A"
+  } else if (offset < 10) {
+    rank = (offset + 1).toString()
+  } else {
+    switch (offset) {
+      case 10:
+        rank = "J"
+        break
+      case 11:
+        rank = "Q"
+        break
+      default:
+        rank = "K"
+    }
+  }
+  return { suit, rank }
 }

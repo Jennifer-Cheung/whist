@@ -1,4 +1,5 @@
-import { getUnicodeCard, Suit } from "../../utils"
+import { getUnicodeCard } from "../../utils"
+import { Suit } from "../../types"
 import styles from './Card.module.scss'
 
 type CardProps = {
@@ -6,25 +7,14 @@ type CardProps = {
     rank?: number | string,
     flipped?: boolean,
     onClick?: () => void,
-    isChosen?: boolean,
 }
 
-const Card = ({ suit, rank, flipped = false, onClick, isChosen }: CardProps) => {
-    return (
-        <span
-            className={[
-                styles.card,
-                isChosen ? styles.chosen : '',
-            ].join(' ')}
-            onClick={onClick}
-        >
-            {
-                flipped
-                    ? String.fromCodePoint(127136)
-                    : getUnicodeCard(suit!, rank!)
-            }
-        </span>
-    )
+const Card = ({ suit, rank, flipped = false, onClick }: CardProps) => {
+    if (flipped) {
+        return (<span className={styles.card}>{String.fromCodePoint(127136)}</span>)
+    } else {
+        return (<span className={`${styles.card} ${suit === Suit.Diamonds || suit === Suit.Hearts ? styles.red : ''}`}>{getUnicodeCard(suit!, rank!)}</span>)
+    }
 }
 
 export default Card
