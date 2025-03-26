@@ -13,6 +13,8 @@ The player who has the higher card of a round wins the trick, and gains the top 
 ## How to play
 To play this game, you can either access the website here:
 
+<https://jennifer-cheung.github.io/whist/>
+
 Or clone the project and run it locally:
 ```
 npm run dev
