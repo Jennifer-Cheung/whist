@@ -1,50 +1,27 @@
-# React + TypeScript + Vite
+# German Whist
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Whist is a classic card game which typically entertains 4 players. It is a complicated game which involves planning and strategy. German Whist, the version implemented in this project, is a variation of Whist. It has a simpler ruleset and can entertain 2 players at minimum.
 
-Currently, two official plugins are available:
+## Game rules
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Detailed game rules can be viewed [here](https://en.wikipedia.org/wiki/German_whist). Or you can watch [this video](https://www.youtube.com/watch?v=3lEQDjBrZxI&ab_channel=GatherTogetherGames) for a quicker understanding.
 
-## Expanding the ESLint configuration
+To put it simply, the goal is to play your card that is higher than the opponent's. Each turn has a leading player, who is the winner of the previous turn, and leads the trick. The suit that the leading player plays is called the leading suit of the round, and the next player must "follow suit", which means that they must play a card of the same suit if they have one. Otherwise, they are free to play any.
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+The player who has the higher card of a round wins the trick, and gains the top card of the deck, which is revealed before the trick, while the other player gains the second card. The winner of the entire game is the player who has won the most tricks.
 
-- Configure the top-level `parserOptions` property like this:
+## How to play
+To play this game, you can either access the website here:
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+Or clone the project and run it locally:
+```
+npm run dev
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
-
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+## Technologies
+Here are a list of the technologies used in this project:
+- **React** with **Vite**
+- **Sass** for styling
+- **Storybook** for component testing
+- **Vitest** for unit tests
+- **TypeScript** for type consistency
