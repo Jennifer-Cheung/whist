@@ -1,11 +1,55 @@
-$red: #ff6969;
+$red: #ffa5a5;
+$blue: #85caff;
+$white: #eeeeee;
+$black: #252525;
 
 .card {
-  font-size: 120px;
+  font-size: 100px;
   cursor: pointer;
-  color: white;
+  color: $white;
+  transition: all 0.2s;
+  position: relative;
+  top: 0;
+  background-color: $black;
+
+  &:not(.flipped):hover {
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    top: -4px;
+  }
+
+  &:not(.flipped):after {
+    content: "";
+    display: block;
+    width: 0;
+    transition: all 0.2s;
+    border-top: 3px solid $white;
+    filter: drop-shadow(0 2px 4px $white);
+    left: 50%;
+    bottom: -4px;
+    position: absolute;
+  }
+
+  &:not(.flipped):hover:after {
+    left: 25%;
+    width: 50%;
+  }
 }
 
 .red {
   color: $red;
+
+  &:not(.flipped):after {
+    border-top: 3px solid $red;
+  }
+}
+
+.flipped {
+  color: $blue;
+  cursor: default;
+}
+
+.disabled {
+  pointer-events: none;
+  cursor: default;
+  opacity: 0.3;
 }

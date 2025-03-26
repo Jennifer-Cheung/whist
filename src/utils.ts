@@ -171,3 +171,16 @@ export const indexToCard = (index: number): Card => {
   }
   return { suit, rank }
 }
+
+export const getSuitSymbol = (suit: Suit) => {
+  switch (suit) {
+    case Suit.Clubs:
+      return "♧"
+    case Suit.Diamonds:
+      return "♢"
+    case Suit.Hearts:
+      return "♡"
+    default:
+      return "♤"
+  }
+}

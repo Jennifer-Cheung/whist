@@ -11,6 +11,7 @@ body {
   font-family: "Inria Serif", sans-serif;
   background-color: $background-color;
   font-size: 1rem;
+  overflow: hidden;
 }
 
 .container {
@@ -42,7 +43,7 @@ body {
   }
 }
 
-.game-title {
+h1 {
   font-size: 3.5rem;
   color: $text-color;
   text-align: center;
@@ -100,10 +101,10 @@ body {
 .game-container {
   transition: 0.5s;
   display: flex;
-  flex-direction: row;
-  padding: 60px 0;
-  justify-content: center;
-  gap: 80px;
+  flex-direction: column;
+  padding: 40px 0;
+  align-items: center;
+  gap: 20px;
 }
 
 .scoreBoard {
@@ -118,4 +119,46 @@ body {
   flex-basis: 0%;
   flex-grow: 1;
   padding: 0;
+}
+
+.trumpSuitMessage {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.suitSymbol {
+  font-size: 2rem;
+}
+
+.deck {
+  display: grid;
+  align-items: center;
+  pointer-events: none;
+}
+
+.deckCard {
+  grid-row: 1;
+  grid-column: 1;
+}
+
+.gameArea {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.hand {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+}
+
+.trickArea {
+  min-height: 150px;
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  pointer-events: none;
 }

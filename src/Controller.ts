@@ -36,8 +36,7 @@ export class State {
    * Initialize the states. Both hands are dealt before the first card of the deck is revealed.
    */
   constructor() {
-    const shuffledDeck = shuffleDeck()
-    console.log(shuffledDeck)
+    const shuffledDeck = [...shuffleDeck()]
     this.myHand = shuffledDeck.splice(0, 13)
     this.opponentHand = shuffledDeck.splice(0, 13)
     this.deck = shuffledDeck
@@ -76,7 +75,7 @@ export class State {
    * @returns The current game state
    */
   getGameState(): GameState {
-    if (this.myHand.length !== 0 && this.opponentHand.length !== 0) {
+    if (this.myHand.length !== 0 || this.opponentHand.length !== 0) {
       return "unfinished"
     } else {
       if (this.myScore > this.opponentScore) {
@@ -95,6 +94,26 @@ export class State {
     }
   }
 
+  getTrumpSuit(): Suit {
+    return this.trumpSuit
+  }
+
+  getDeck(): Card[] {
+    return this.deck
+  }
+
+  getMyHand(): Card[] {
+    return this.myHand
+  }
+
+  getOpponentHand(): Card[] {
+    return this.opponentHand
+  }
+
+  getTrickArea(): Card[] {
+    return this.trickArea
+  }
+
   /**
    * Notes for myself:
    * There are two scenarios: if the player has won in the previous round, the player gets to play the first card of the trick
@@ -110,22 +129,34 @@ export class State {
    * @param {Card} chosenCard - The card chosen by the player in this round
    */
   update(chosenCard: Card): State {
-    this.playerPlayCard(chosenCard)
-    if (this.leadingPlayer === Player.Player) {
-      this.updateProbabilityVector({
-        cardsNotOnHand: [this.trickArea[0]],
+    const newState = new State()
+    // Copy all current state
+    Object.assign(newState, this)
+    // Create new arrays to avoid reference issues
+    newState.myHand = [...this.myHand]
+    newState.opponentHand = [...this.opponentHand]
+    newState.deck = [...this.deck]
+    newState.trickArea = [...this.trickArea]
+    newState.indexOnHand = [...this.indexOnHand]
+    newState.indexNotOnHand = [...this.indexNotOnHand]
+    newState.probabilityVector = [...this.probabilityVector]
+
+    newState.playerPlayCard(chosenCard)
+    if (newState.leadingPlayer === Player.Player) {
+      newState.updateProbabilityVector({
+        cardsNotOnHand: [newState.trickArea[0]],
         cardsOnHand: [],
       })
-      this.opponentTurn()
+      newState.opponentTurn()
     } else {
-      this.updateProbabilityVector({
-        cardsNotOnHand: [this.trickArea[1]],
+      newState.updateProbabilityVector({
+        cardsNotOnHand: [newState.trickArea[1]],
         cardsOnHand: [],
       })
     }
 
     const getOppositePlayer = (): Player => {
-      if (this.leadingPlayer === Player.Player) {
+      if (newState.leadingPlayer === Player.Player) {
         return Player.Opponent
       } else {
         return Player.Player
@@ -134,53 +165,65 @@ export class State {
 
     // Compare and update scores
     const winner: Player = cardBiggerThan(
-      this.trickArea[0],
-      this.trickArea[1],
-      this.trumpSuit
+      newState.trickArea[0],
+      newState.trickArea[1],
+      newState.trumpSuit
     )
-      ? this.leadingPlayer
+      ? newState.leadingPlayer
       : getOppositePlayer()
     if (winner === Player.Player) {
-      this.myScore++
-      this.leadingPlayer = Player.Player
-      this.trickArea = []
-      if (this.deck.length > 0) {
-        const firstCard = this.deck.splice(0, 1)[0]
-        const secondCard = this.deck.splice(0, 1)[0]
-        this.myHand.push(firstCard)
-        this.opponentHand.push(secondCard)
-        this.updateProbabilityVector({
+      newState.myScore++
+      newState.leadingPlayer = Player.Player
+      newState.trickArea = []
+      if (newState.deck.length > 0) {
+        const firstCard = newState.deck.splice(0, 1)[0]
+        const secondCard = newState.deck.splice(0, 1)[0]
+        newState.myHand.push(firstCard)
+        newState.opponentHand.push(secondCard)
+        newState.updateProbabilityVector({
           cardsOnHand: [firstCard],
           cardsNotOnHand: [secondCard],
         })
       }
     } else {
-      this.opponentScore++
-      this.leadingPlayer = Player.Opponent
-      this.trickArea = []
-      if (this.deck.length > 0) {
-        const firstCard = this.deck.splice(0, 1)[0]
-        const secondCard = this.deck.splice(0, 1)[0]
-        this.opponentHand.push(firstCard)
-        this.myHand.push(secondCard)
-        this.updateProbabilityVector({
+      newState.opponentScore++
+      newState.leadingPlayer = Player.Opponent
+      newState.trickArea = []
+      if (newState.deck.length > 0) {
+        const firstCard = newState.deck.splice(0, 1)[0]
+        const secondCard = newState.deck.splice(0, 1)[0]
+        newState.opponentHand.push(firstCard)
+        newState.myHand.push(secondCard)
+        newState.updateProbabilityVector({
           cardsNotOnHand: [firstCard],
           cardsOnHand: [],
         })
       }
-      this.opponentTurn()
+      if (this.opponentHand.length > 0) {
+        newState.opponentTurn()
+      }
     }
 
-    return this
+    return newState
   }
 
   opponentPlayCard(card: Card) {
-    this.opponentHand.splice(this.opponentHand.indexOf(card))
+    this.opponentHand.splice(
+      this.opponentHand.findIndex(
+        (handCard) => handCard.suit === card.suit && handCard.rank === card.rank
+      ),
+      1
+    )
     this.trickArea.push(card)
   }
 
   playerPlayCard(card: Card) {
-    this.myHand.splice(this.myHand.indexOf(card))
+    this.myHand.splice(
+      this.myHand.findIndex(
+        (handCard) => handCard.suit === card.suit && handCard.rank === card.rank
+      ),
+      1
+    )
     this.trickArea.push(card)
   }
 
@@ -189,24 +232,36 @@ export class State {
       const availableCards = this.opponentHand.filter(
         (card) => card.suit === this.getLeadingSuit()
       )
+
       if (availableCards.length > 0) {
         // Play the smallest card that can beat the player. Sort the available cards in ascending order
         availableCards.sort((card1, card2) =>
           cardBiggerThan(card1, card2, this.trumpSuit) ? 1 : -1
         )
-        availableCards.forEach((card) => {
+
+        for (const card of availableCards) {
           if (cardBiggerThan(card, this.trickArea[0], this.trumpSuit)) {
             this.opponentPlayCard(card)
             return
           }
-        })
+        }
+
         // Can follow suit but no cards can beat the player. Play the smallest card possible.
         this.opponentPlayCard(availableCards[0])
+        return
       } else {
-        // Cannot follow suit, play the smallest card available
+        // Cannot follow suit. If a trump suit is present, play the smallest card of all. Otherwise, play the smallest card.
         const orderedCards = [...this.opponentHand].sort((card1, card2) =>
           cardBiggerThan(card1, card2, this.trumpSuit) ? 1 : -1
         )
+        if (orderedCards.some((card) => card.suit === this.trumpSuit)) {
+          for (const card of orderedCards) {
+            if (card.suit === this.trumpSuit) {
+              this.opponentPlayCard(card)
+              return
+            }
+          }
+        }
         this.opponentPlayCard(orderedCards[0])
         return
       }
@@ -275,7 +330,7 @@ export class State {
     })
     let counter = 0 // Beware of divide by zero error
     const otherIndices: number[] = []
-    this.probabilityVector.forEach((probability, index) => {
+    this.probabilityVector.forEach((_, index) => {
       if (this.indexNotOnHand.includes(index)) {
         this.probabilityVector[index] = 0
       } else if (this.indexOnHand.includes(index)) {
