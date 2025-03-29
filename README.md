@@ -1,5 +1,8 @@
 # German Whist
 
+![image](https://github.com/user-attachments/assets/707d7a8e-f92a-4e54-9100-2db6c08cd05b)
+![image](https://github.com/user-attachments/assets/22282563-224d-4202-a3e7-84191db62b7b)
+
 Whist is a classic card game which typically entertains 4 players. It is a complicated game which involves planning and strategy. German Whist, the version implemented in this project, is a variation of Whist. It has a simpler ruleset and can entertain 2 players at minimum.
 
 ## Game rules
@@ -17,6 +20,7 @@ To play this game, you can either access the website here:
 
 Or clone the project and run it locally:
 ```
+npm install
 npm run dev
 ```
 
